@@ -1,72 +1,128 @@
-import 'package:expense_manager/model/expense.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:localstorage/localstorage.dart';
-import 'dart:convert'; // Add this for JSON encoding
+import 'dart:convert';
+
+import '../model/expense.dart';
+import '../model/expense_category.dart';
+import '../model/tag.dart';
 
 class ExpenseProvider with ChangeNotifier {
-
-  //* initialize local Storage
   final LocalStorage storage;
-
+  // List of expenses
   List<Expense> _expenses = [];
 
+  // List of categories
+  final List<ExpenseCategory> _categories = [
+    ExpenseCategory(id: '1', name: 'Food', isDafault: true),
+    ExpenseCategory(id: '2', name: 'Transport', isDafault: true),
+    ExpenseCategory(id: '3', name: 'Entertainment', isDafault: true),
+    ExpenseCategory(id: '4', name: 'Office', isDafault: true),
+    ExpenseCategory(id: '5', name: 'Gym', isDafault: true),
+  ];
+
+  // List of tags
+  final List<Tag> _tags = [
+    Tag(id: '1', name: 'Breakfast'),
+    Tag(id: '2', name: 'Lunch'),
+    Tag(id: '3', name: 'Dinner'),
+    Tag(id: '4', name: 'Treat'),
+    Tag(id: '5', name: 'Cafe'),
+    Tag(id: '6', name: 'Restaurant'),
+    Tag(id: '7', name: 'Train'),
+    Tag(id: '8', name: 'Vacation'),
+    Tag(id: '9', name: 'Birthday'),
+    Tag(id: '10', name: 'Diet'),
+    Tag(id: '11', name: 'MovieNight'),
+    Tag(id: '12', name: 'Tech'),
+    Tag(id: '13', name: 'CarStuff'),
+    Tag(id: '14', name: 'SelfCare'),
+    Tag(id: '15', name: 'Streaming'),
+  ];
+
+  // Getters
   List<Expense> get expenses => _expenses;
+  List<ExpenseCategory> get categories => _categories;
+  List<Tag> get tags => _tags;
 
   ExpenseProvider(this.storage) {
-    _loadExpenseFromStorage();
+    _loadExpensesFromStorage();
   }
 
-//* load data from storage
-  void _loadExpenseFromStorage() async {
-    var storedData = storage.getItem('expenses');
-    if (storedData != null) {
-      List<dynamic> parsed = jsonDecode(storedData); // Decode stored string
-      _expenses = parsed.map((item) => Expense.fromJson(item)).toList();
+  void _loadExpensesFromStorage() async {
+    // await storage.ready;
+    var storedExpenses = storage.getItem('expenses');
+    if (storedExpenses != null) {
+      _expenses = List<Expense>.from(
+        (storedExpenses as List).map((item) => Expense.fromJson(item)),
+      );
+      notifyListeners();
     }
+  }
+
+  // Add an expense
+  void addExpense(Expense expense) {
+    _expenses.add(expense);
+    _saveExpensesToStorage();
     notifyListeners();
   }
 
-//* Save data on storage
-  void _saveExpenseToStorage() {
-    String data = jsonEncode(_expenses.map((e) => e.toJson()).toList());
-    storage.setItem('expenses', data);
+  void _saveExpensesToStorage() {
+    storage.setItem(
+        'expenses', jsonEncode(_expenses.map((e) => e.toJson()).toList()));
   }
 
-//* add expense
-  void addExpense(Expense expense) {
-    try {
-      _expenses.add(expense);
-      _saveExpenseToStorage();
-      notifyListeners();
-    } catch (e) {
-      throw Exception(e);
-    }
-  }
-
-//* add or update expense
   void addOrUpdateExpense(Expense expense) {
-    try {
-      int index = _expenses.indexWhere((e) => e.id == expense.id);
-      if (index != -1) {
-        _expenses[index] = expense;
-      } else {
-        _expenses.add(expense);
-      }
-      _saveExpenseToStorage();
+    int index = _expenses.indexWhere((e) => e.id == expense.id);
+    if (index != -1) {
+      // Update existing expense
+      _expenses[index] = expense;
+    } else {
+      // Add new expense
+      _expenses.add(expense);
+    }
+    _saveExpensesToStorage(); // Save the updated list to local storage
+    notifyListeners();
+  }
+
+  // Delete an expense
+  void deleteExpense(String id) {
+    _expenses.removeWhere((expense) => expense.id == id);
+    _saveExpensesToStorage(); // Save the updated list to local storage
+    notifyListeners();
+  }
+
+  // Add a category
+  void addCategory(ExpenseCategory category) {
+    if (!_categories.any((cat) => cat.name == category.name)) {
+      _categories.add(category);
       notifyListeners();
-    } catch (e) {
-      throw Exception(e);
     }
   }
 
-//* delete expense
-  void removeExpense(int id) {
-    try {
-      _expenses.removeWhere((expenses) => expenses.id == id);
-      _saveExpenseToStorage();
+  // Delete a category
+  void deleteCategory(String id) {
+    _categories.removeWhere((category) => category.id == id);
+    notifyListeners();
+  }
+
+  // Add a tag
+  void addTag(Tag tag) {
+    if (!_tags.any((t) => t.name == tag.name)) {
+      _tags.add(tag);
       notifyListeners();
-    } catch (e) {
-      throw Exception(e);
     }
+  }
+
+  // Delete a tag
+  void deleteTag(String id) {
+    _tags.removeWhere((tag) => tag.id == id);
+    notifyListeners();
+  }
+
+  void removeExpense(String id) {
+    _expenses.removeWhere((expense) => expense.id == id);
+    _saveExpensesToStorage(); // Save the updated list to local storage
+    notifyListeners();
   }
 }

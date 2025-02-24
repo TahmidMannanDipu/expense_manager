@@ -1,18 +1,41 @@
-import 'package:expense_manager/view/Screens/add_expense_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:localstorage/localstorage.dart';
+import 'package:provider/provider.dart';
+import 'data/expense_provider.dart';
+import 'view/Screens/category_management_screen.dart';
+import 'view/Screens/home_screen.dart';
+import 'view/screens/tag_management_screen.dart'; // Corrected import path case
 
-void main() {
-  runApp(MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize and create LocalStorage instance
+  final localStorage = LocalStorage('expenses.json');
+  await localStorage.ready;
+
+  runApp(MyApp(localStorage: localStorage));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final LocalStorage localStorage;
+
+  const MyApp({Key? key, required this.localStorage}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Expense Tracker',
-      home: AddExpenseScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ExpenseProvider(localStorage)),
+      ],
+      child: MaterialApp(
+        title: 'Expense Tracker',
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+        routes: {
+          '/': (context) => HomeScreen(),
+          '/manage_categories': (context) => CategoryManagementScreen(),
+          '/manage_tags': (context) => TagManagementScreen(),
+        },
+      ),
     );
   }
 }

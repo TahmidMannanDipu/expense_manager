@@ -1,36 +1,36 @@
 class Expense {
   final String id;
   final double amount;
-  final String categoryId;
+  final String categoryId; // This will link to ExpenseCategory
   final String payee;
   final String note;
   final DateTime date;
-  final String tag;
+  final String tag; // This assumes you have a tagging system. Adjust if needed.
 
-  //* Expense class Constructor
-  Expense(
-      {required this.id,
-      required this.amount,
-      required this.categoryId,
-      required this.payee,
-      required this.note,
-      required this.date,
-      required this.tag});
+  Expense({
+    required this.id,
+    required this.amount,
+    required this.categoryId,
+    required this.payee,
+    required this.note,
+    required this.date,
+    required this.tag,
+  });
 
-//* Get info as JsonData
+  // Convert a JSON object to an Expense instance
   factory Expense.fromJson(Map<String, dynamic> json) {
     return Expense(
       id: json['id'],
       amount: json['amount'],
       categoryId: json['categoryId'],
-      payee: json['payee'],
+      payee: json['payFor'],
       note: json['note'],
-      date: json['date'],
-      tag: json[' tag'],
+      date: DateTime.parse(json['date']),
+      tag: json['tag'],
     );
   }
 
-  //* send to json
+  // Convert an Expense instance to a JSON object
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -38,7 +38,7 @@ class Expense {
       'categoryId': categoryId,
       'payee': payee,
       'note': note,
-      'date': date,
+      'date': date.toIso8601String(),
       'tag': tag,
     };
   }
